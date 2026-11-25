@@ -1,0 +1,31 @@
+name: Compact data-live history
+
+on:
+  schedule:
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  compact:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if data-live branch exists
+        id: check
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: data-live
+          fetch-depth: 1
+
+      - name: Squash data-live to latest snapshot commit
+        if: steps.check.outcome == 'success'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan data-live-clean
+          git add -A
+          git commit -m "chore(data-live): weekly history compaction"
+          git push origin data-live-clean:data-live --force
